@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Una factura que llega después del cierre · Simulador de Decisión</title>
+<style>
+  :root {
+    --bg: #FBF9F5;
+    --card: #FFFFFF;
+    --ink: #2A2421;
+    --muted: #655B54;
+    --terracotta: #B85233;
+    --terracotta-dark: #963E23;
+    --terracotta-light: #F7EBE7;
+    --forest: #4F6838;
+    --forest-dark: #3B4F29;
+    --forest-light: #ECF2E6;
+    --border: #E2DBD0;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 20px 14px 48px;
+    background-color: var(--bg);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 18px;
+    line-height: 1.6;
+  }
+  .container { max-width: 760px; margin: 0 auto; }
+  .header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding: 12px 18px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+  }
+  .header-title { font-weight: 800; font-size: 17px; color: var(--ink); }
+  .header-role { font-size: 14px; color: var(--muted); }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(42, 36, 33, 0.06);
+  }
+  .visual-box {
+    width: 100%;
+    background: #F3EFE6;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+  }
+  .visual-box svg { width: 100%; height: auto; display: block; }
+  .visual-box img { max-width: 100%; max-height: 380px; object-fit: contain; display: block; }
+  .content { padding: 26px 24px 30px; }
+  .badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 12px;
+  }
+  .badge-decision { background: var(--terracotta-light); color: var(--terracotta); }
+  .badge-final { background: var(--forest-light); color: var(--forest); }
+  h1, h2, h3 { margin: 0 0 12px; line-height: 1.25; }
+  .situation-text { font-size: 20px; margin: 0 0 24px; color: var(--ink); }
+  .options-list { display: flex; flex-direction: column; gap: 14px; }
+  .option-btn {
+    width: 100%;
+    text-align: left;
+    background: var(--terracotta);
+    color: #FFFFFF;
+    border: none;
+    border-radius: 16px;
+    padding: 18px 20px;
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.45;
+    cursor: pointer;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    transition: background 0.15s, transform 0.1s;
+  }
+  .option-btn:hover { background: var(--terracotta-dark); }
+  .option-btn:active { transform: scale(0.99); }
+  .opt-letter {
+    background: rgba(255,255,255,0.22);
+    padding: 2px 11px;
+    border-radius: 8px;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .login-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 20px;
+    margin: 18px 0 24px;
+  }
+  .field-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 800;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    color: var(--ink);
+  }
+  .field-input {
+    width: 100%;
+    padding: 12px 14px;
+    font-size: 17px;
+    border: 1px solid #C9BFB5;
+    border-radius: 12px;
+    margin-bottom: 14px;
+    background: #FFFFFF;
+  }
+  .submit-sheet-box {
+    background: var(--forest);
+    color: #FFFFFF;
+    border-radius: 18px;
+    padding: 22px;
+    margin: 22px 0;
+  }
+  .submit-sheet-btn {
+    width: 100%;
+    background: #FFFFFF;
+    color: var(--forest-dark);
+    border: none;
+    border-radius: 12px;
+    padding: 15px 18px;
+    font-size: 17px;
+    font-weight: 800;
+    cursor: pointer;
+    margin-top: 12px;
+  }
+  .submit-sheet-btn:disabled { opacity: 0.75; cursor: default; }
+  .closing-box {
+    background: var(--forest-light);
+    border: 1px solid #C3D4B4;
+    border-radius: 16px;
+    padding: 18px 20px;
+    margin: 20px 0;
+  }
+  .vars-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 12px;
+    margin: 16px 0 24px;
+  }
+  .var-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px;
+  }
+  .bar-bg {
+    width: 100%;
+    height: 10px;
+    background: #DFD9CE;
+    border-radius: 99px;
+    overflow: hidden;
+    margin-top: 8px;
+  }
+  .bar-fill { height: 100%; background: var(--forest); border-radius: 99px; }
+  .step-item {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    font-size: 16px;
+  }
+  .code-box {
+    background: #2A2421;
+    color: #FFFFFF;
+    border-radius: 16px;
+    padding: 16px 18px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin: 22px 0;
+  }
+  .secondary-btn {
+    background: #3E3632;
+    color: #FFFFFF;
+    border: 1px solid #594E49;
+    padding: 9px 15px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .msg-banner {
+    display: none;
+    padding: 12px 16px;
+    border-radius: 12px;
+    margin-bottom: 14px;
+    font-size: 15px;
+    font-weight: 700;
+    background: var(--terracotta-light);
+    color: var(--terracotta-dark);
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header-bar">
+    <div>
+      <div class="header-title" id="sim-title"></div>
+      <div class="header-role" id="sim-role"></div>
+    </div>
+    <button class="secondary-btn" onclick="restartSim()">Reiniciar</button>
+  </div>
+  <div class="card" id="sim-screen"></div>
+</div>
+
+<script>
+const DATOS_SIMULADOR = {
+  "meta": {
+    "title": "Una factura que llega después del cierre",
+    "audience": "Estudiantes de Contabilidad I (Bases y Fundamentos)",
+    "objective": "Analizar cómo se equilibran el criterio de devengado, el respaldo documental y la relación con la dirección al cerrar un ejercicio.",
+    "role": "Auxiliar contable de una empresa pequeña",
+    "initialSituation": "Llega una factura fechada en enero por un servicio prestado en diciembre, cuando los estados contables del ejercicio todavía no se entregaron.",
+    "storyBrief": "Primera semana de enero. El auxiliar contable de una distribuidora pequeña recibe una factura fechada el 3 de enero por un mantenimiento hecho en diciembre. Elige entre registrar el gasto en el ejercicio que cerró o pedir antes la documentación del servicio. Si registra de inmediato, la gerencia objeta y pide pasarlo a enero; el auxiliar decide si explica el criterio y revisa los papeles con la gerencia o si accede. Si pide la documentación, la encuentra firmada el 20 de diciembre; la gerencia igual prefiere que el gasto no figure y el auxiliar decide si registra y archiva o si propone consultar al contador. Los caminos se juntan en el cierre del balance, donde decide cómo queda tratado el gasto.",
+    "variablesBrief": "Fidelidad (0 a 10, inicia en 5), Vinculo (0 a 10, inicia en 5) y Respaldo (si/no, inicia en no)."
+  },
+  "requireLogin": true,
+  "sheetsWebhookUrl": "",
+  "variables": [
+    {
+      "name": "Fidelidad",
+      "description": "Cuánto reflejan los registros los hechos económicos del ejercicio",
+      "type": "number",
+      "min": 0,
+      "max": 10,
+      "initial": 5
+    },
+    {
+      "name": "Vinculo",
+      "description": "Cómo queda la relación de trabajo con la gerencia",
+      "type": "number",
+      "min": 0,
+      "max": 10,
+      "initial": 5
+    },
+    {
+      "name": "Respaldo",
+      "description": "Si se cuenta con documentación que acredita que el servicio se prestó en el ejercicio (orden de trabajo o conformidad de recepción)",
+      "type": "boolean",
+      "initial": "no"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "N1",
+      "type": "decision",
+      "title": "Llega la factura",
+      "text": "Es la primera semana de enero. Sos auxiliar contable de una distribuidora pequeña y los estados contables del ejercicio que cerró el 31 de diciembre todavía no se entregaron. Un proveedor envía una factura fechada el 3 de enero por el mantenimiento de un equipo de refrigeración. El servicio se hizo en diciembre y el importe es significativo para el resultado del año. La gerencia quiere presentar un resultado lo más favorable posible. ¿Qué hacés?",
+      "closingComment": "",
+      "visualType": "svg",
+      "visualContent": "\u003csvg viewBox=\"0 0 800 420\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\"\u003e\u003crect width=\"800\" height=\"420\" fill=\"#F7EBE7\"/\u003e\u003crect x=\"100\" y=\"330\" width=\"600\" height=\"12\" rx=\"4\" fill=\"#8C5A3C\"/\u003e\u003cg transform=\"translate(150,70)\"\u003e\u003crect width=\"190\" height=\"250\" rx=\"10\" fill=\"#fff\" stroke=\"#B85233\" stroke-width=\"3\"/\u003e\u003crect x=\"20\" y=\"24\" width=\"150\" height=\"14\" rx=\"4\" fill=\"#E2DBD0\"/\u003e\u003crect x=\"20\" y=\"52\" width=\"110\" height=\"10\" rx=\"4\" fill=\"#E2DBD0\"/\u003e\u003crect x=\"20\" y=\"84\" width=\"150\" height=\"10\" rx=\"4\" fill=\"#F0EBE2\"/\u003e\u003crect x=\"20\" y=\"110\" width=\"150\" height=\"10\" rx=\"4\" fill=\"#F0EBE2\"/\u003e\u003crect x=\"20\" y=\"136\" width=\"150\" height=\"10\" rx=\"4\" fill=\"#F0EBE2\"/\u003e\u003crect x=\"20\" y=\"162\" width=\"150\" height=\"10\" rx=\"4\" fill=\"#F0EBE2\"/\u003e\u003crect x=\"20\" y=\"196\" width=\"150\" height=\"34\" rx=\"8\" fill=\"#F7EBE7\"/\u003e\u003ctext x=\"95\" y=\"219\" text-anchor=\"middle\" font-family=\"system-ui, Segoe UI, Arial, sans-serif\" font-size=\"16\" font-weight=\"700\" fill=\"#963E23\"\u003eFACTURA · 03/01\u003c/text\u003e\u003c/g\u003e\u003cg transform=\"translate(420,95)\"\u003e\u003crect width=\"230\" height=\"180\" rx=\"14\" fill=\"#fff\" stroke=\"#655B54\" stroke-width=\"3\"/\u003e\u003crect width=\"230\" height=\"42\" rx=\"14\" fill=\"#655B54\"/\u003e\u003ctext x=\"115\" y=\"28\" text-anchor=\"middle\" font-family=\"system-ui, Segoe UI, Arial, sans-serif\" font-size=\"20\" font-weight=\"800\" fill=\"#fff\"\u003eDICIEMBRE\u003c/text\u003e\u003crect x=\"14\" y=\"58\" width=\"32\" height=\"26\" rx=\"5\" fill=\"#EFE9DF\"/\u003e\u003crect x=\"56\" y=\"58\" width=\"32\" height=\"26\" rx=\"5\" fill=\"#EFE9DF\"/\u003e\u003crect x=\"98\" y=\"58\" width=\"32\" height=\"26\" rx=\"5\" fill=\"#EFE9DF\"/\u003e\u003crect x=\"140\" y=\"58\" width=\"32\" height=\"26\" rx=\"5\" fill=\"#EFE9DF\"/\u003e\u003crect x=\"182\" y=\"58\" width=\"32\" height=\"26\" rx=\"5\" fill=\"#EFE9DF\"/\u003e\u003crect x=\"14\" y=\"96\" width=\"32\" height=\"26\" rx=\"5\" fill=\"#EFE9DF\"/\u003e\u003crect x=\"56\" y=\"96\" width=\"32\" height=\"26\" rx=\"5\" fill=\"#EFE9DF\"/\u003e\u003crect x=\"98\" y=\"96\" width=\"32\" height=\"26\" rx=\"5\" fill=\"#B85233\"/\u003e\u003crect x=\"140\" y=\"96\" width=\"32\" height=\"26\" rx=\"5\" fill=\"#EFE9DF\"/\u003e\u003crect x=\"182\" y=\"96\" width=\"32\" height=\"26\" rx=\"5\" fill=\"#EFE9DF\"/\u003e\u003crect x=\"14\" y=\"134\" width=\"32\" height=\"26\" rx=\"5\" fill=\"#EFE9DF\"/\u003e\u003crect x=\"56\" y=\"134\" width=\"32\" height=\"26\" rx=\"5\" fill=\"#EFE9DF\"/\u003e\u003crect x=\"98\" y=\"134\" width=\"32\" height=\"26\" rx=\"5\" fill=\"#EFE9DF\"/\u003e\u003crect x=\"140\" y=\"134\" width=\"32\" height=\"26\" rx=\"5\" fill=\"#EFE9DF\"/\u003e\u003crect x=\"182\" y=\"134\" width=\"32\" height=\"26\" rx=\"5\" fill=\"#EFE9DF\"/\u003e\u003c/g\u003e\u003ctext x=\"535\" y=\"310\" text-anchor=\"middle\" font-family=\"system-ui, Segoe UI, Arial, sans-serif\" font-size=\"18\" font-weight=\"700\" fill=\"#963E23\"\u003eServicio prestado el 20/12\u003c/text\u003e\u003c/svg\u003e",
+      "visualPrompt": "Escritorio con una factura fechada el 3 de enero y un calendario de diciembre con el servicio del 20/12"
+    },
+    {
+      "id": "N2",
+      "type": "decision",
+      "title": "La gerencia objeta",
+      "text": "La gerencia ve el asiento en el libro diario y te pide que lo pases a enero: dice que la factura es de enero y que, con ese gasto, el resultado del año queda muy bajo. Todavía no revisaste la documentación del servicio.",
+      "closingComment": "",
+      "visualType": "svg",
+      "visualContent": "\u003csvg viewBox=\"0 0 800 420\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\"\u003e\u003crect width=\"800\" height=\"420\" fill=\"#F7EBE7\"/\u003e\u003cg transform=\"translate(130,70)\"\u003e\u003crect width=\"540\" height=\"190\" rx=\"28\" fill=\"#fff\" stroke=\"#B85233\" stroke-width=\"4\"/\u003e\u003cpath d=\"M110,190 L90,250 L170,190 Z\" fill=\"#fff\" stroke=\"#B85233\" stroke-width=\"4\" stroke-linejoin=\"round\"/\u003e\u003crect x=\"104\" y=\"186\" width=\"70\" height=\"8\" fill=\"#fff\"/\u003e\u003ctext x=\"270\" y=\"88\" text-anchor=\"middle\" font-family=\"system-ui, Segoe UI, Arial, sans-serif\" font-size=\"30\" font-weight=\"800\" fill=\"#2A2421\"\u003e“Pasemos ese gasto a enero:\u003c/text\u003e\u003ctext x=\"270\" y=\"132\" text-anchor=\"middle\" font-family=\"system-ui, Segoe UI, Arial, sans-serif\" font-size=\"30\" font-weight=\"800\" fill=\"#2A2421\"\u003eel resultado del año queda muy bajo”\u003c/text\u003e\u003c/g\u003e\u003ctext x=\"400\" y=\"330\" text-anchor=\"middle\" font-family=\"system-ui, Segoe UI, Arial, sans-serif\" font-size=\"22\" font-weight=\"700\" fill=\"#963E23\"\u003eLa gerencia objeta el asiento\u003c/text\u003e\u003c/svg\u003e",
+      "visualPrompt": "Globo de diálogo de la gerencia pidiendo pasar el gasto a enero"
+    },
+    {
+      "id": "N3",
+      "type": "decision",
+      "title": "Aparece la documentación",
+      "text": "La orden de trabajo y la conformidad de recepción están firmadas el 20 de diciembre, así que el servicio se prestó en el ejercicio que cerró. Al ver los papeles, la gerencia dice que de todos modos preferiría que ese gasto no figure en el balance de este año.",
+      "closingComment": "",
+      "visualType": "svg",
+      "visualContent": "\u003csvg viewBox=\"0 0 800 420\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\"\u003e\u003crect width=\"800\" height=\"420\" fill=\"#F7EBE7\"/\u003e\u003cg transform=\"translate(230,60)\"\u003e\u003cpath d=\"M0,40 h120 l30,-30 h200 a14,14 0 0 1 14,14 v230 a14,14 0 0 1 -14,14 h-330 a14,14 0 0 1 -14,-14 z\" fill=\"#fff\" stroke=\"#B85233\" stroke-width=\"4\"/\u003e\u003crect x=\"30\" y=\"70\" width=\"270\" height=\"12\" rx=\"5\" fill=\"#E2DBD0\"/\u003e\u003crect x=\"30\" y=\"100\" width=\"210\" height=\"12\" rx=\"5\" fill=\"#E2DBD0\"/\u003e\u003ccircle cx=\"270\" cy=\"190\" r=\"40\" fill=\"#4F6838\"/\u003e\u003cpath d=\"M250,190 L266,206 L292,174\" fill=\"none\" stroke=\"#fff\" stroke-width=\"8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/\u003e\u003ctext x=\"120\" y=\"200\" text-anchor=\"middle\" font-family=\"system-ui, Segoe UI, Arial, sans-serif\" font-size=\"20\" font-weight=\"700\" fill=\"#2A2421\"\u003eOrden de trabajo 20/12\u003c/text\u003e\u003c/g\u003e\u003ctext x=\"400\" y=\"360\" text-anchor=\"middle\" font-family=\"system-ui, Segoe UI, Arial, sans-serif\" font-size=\"20\" font-weight=\"700\" fill=\"#963E23\"\u003eConformidad de recepción firmada\u003c/text\u003e\u003c/svg\u003e",
+      "visualPrompt": "Carpeta con orden de trabajo del 20/12 y conformidad firmada"
+    },
+    {
+      "id": "N4",
+      "type": "decision",
+      "title": "Cierre del balance",
+      "text": "Se acerca el día de entrega de los estados contables. El gasto de mantenimiento sigue pendiente de definir en el cierre y hay que resolver cómo queda tratado.",
+      "closingComment": "",
+      "visualType": "svg",
+      "visualContent": "\u003csvg viewBox=\"0 0 800 420\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\"\u003e\u003crect width=\"800\" height=\"420\" fill=\"#F7EBE7\"/\u003e\u003cg transform=\"translate(150,55)\"\u003e\u003crect width=\"500\" height=\"270\" rx=\"16\" fill=\"#fff\" stroke=\"#B85233\" stroke-width=\"4\"/\u003e\u003crect width=\"500\" height=\"50\" rx=\"16\" fill=\"#B85233\"/\u003e\u003ctext x=\"250\" y=\"34\" text-anchor=\"middle\" font-family=\"system-ui, Segoe UI, Arial, sans-serif\" font-size=\"22\" font-weight=\"800\" fill=\"#fff\"\u003eCIERRE AL 31/12\u003c/text\u003e\u003crect x=\"30\" y=\"76\" width=\"220\" height=\"14\" rx=\"5\" fill=\"#EFE9DF\"/\u003e\u003crect x=\"400\" y=\"76\" width=\"70\" height=\"14\" rx=\"5\" fill=\"#E2DBD0\"/\u003e\u003crect x=\"30\" y=\"114\" width=\"273\" height=\"14\" rx=\"5\" fill=\"#EFE9DF\"/\u003e\u003crect x=\"400\" y=\"114\" width=\"70\" height=\"14\" rx=\"5\" fill=\"#E2DBD0\"/\u003e\u003crect x=\"30\" y=\"152\" width=\"326\" height=\"14\" rx=\"5\" fill=\"#EFE9DF\"/\u003e\u003crect x=\"400\" y=\"152\" width=\"70\" height=\"14\" rx=\"5\" fill=\"#B85233\"/\u003e\u003crect x=\"30\" y=\"190\" width=\"239\" height=\"14\" rx=\"5\" fill=\"#EFE9DF\"/\u003e\u003crect x=\"400\" y=\"190\" width=\"70\" height=\"14\" rx=\"5\" fill=\"#E2DBD0\"/\u003e\u003crect x=\"30\" y=\"228\" width=\"292\" height=\"14\" rx=\"5\" fill=\"#EFE9DF\"/\u003e\u003crect x=\"400\" y=\"228\" width=\"70\" height=\"14\" rx=\"5\" fill=\"#E2DBD0\"/\u003e\u003c/g\u003e\u003ctext x=\"400\" y=\"372\" text-anchor=\"middle\" font-family=\"system-ui, Segoe UI, Arial, sans-serif\" font-size=\"20\" font-weight=\"700\" fill=\"#963E23\"\u003e¿Cómo queda tratado el gasto de mantenimiento?\u003c/text\u003e\u003c/svg\u003e",
+      "visualPrompt": "Planilla de cierre al 31/12 con el gasto de mantenimiento marcado"
+    },
+    {
+      "id": "F1",
+      "type": "final",
+      "title": "Equilibrada",
+      "text": "El gasto queda registrado en diciembre, con su respaldo, y la gerencia entiende el criterio. El resultado del año refleja el servicio recibido y el equipo sigue trabajando con normalidad.",
+      "closingComment": "Aplicaste el criterio de devengado y mantuviste la relación de trabajo. ¿Qué te permitió explicarlo de manera que la gerencia lo aceptara?",
+      "visualType": "svg",
+      "visualContent": "\u003csvg viewBox=\"0 0 800 420\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\"\u003e\u003crect width=\"800\" height=\"420\" fill=\"#ECF2E6\"/\u003e\u003ccircle cx=\"400\" cy=\"150\" r=\"64\" fill=\"#4F6838\"/\u003e\u003cpath d=\"M372,150 L392,170 L432,130\" fill=\"none\" stroke=\"#fff\" stroke-width=\"8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/\u003e\u003ctext x=\"400\" y=\"262\" text-anchor=\"middle\" font-family=\"system-ui, Segoe UI, Arial, sans-serif\" font-size=\"26\" font-weight=\"800\" fill=\"#2A2421\"\u003eFINAL F1 · EQUILIBRADA\u003c/text\u003e\u003ctext x=\"400\" y=\"298\" text-anchor=\"middle\" font-family=\"system-ui, Segoe UI, Arial, sans-serif\" font-size=\"17\" font-weight=\"500\" fill=\"#3B4F29\"\u003eGasto en diciembre, con respaldo y con la gerencia al tanto\u003c/text\u003e\u003c/svg\u003e",
+      "visualPrompt": "Resolución equilibrada del cierre"
+    },
+    {
+      "id": "F2",
+      "type": "final",
+      "title": "Vínculo tenso",
+      "text": "El gasto queda registrado en diciembre y está respaldado. Sin embargo, la gerencia sintió que la decisión se le impuso y, en los meses siguientes, te consulta menos en los cierres.",
+      "closingComment": "El tratamiento contable fue adecuado, pero el modo de comunicarlo tuvo un costo en la relación. ¿Qué habría cambiado explicarlo antes o sumar la consulta al contador?",
+      "visualType": "svg",
+      "visualContent": "\u003csvg viewBox=\"0 0 800 420\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\"\u003e\u003crect width=\"800\" height=\"420\" fill=\"#F7EBE7\"/\u003e\u003ccircle cx=\"400\" cy=\"150\" r=\"64\" fill=\"#B85233\"/\u003e\u003cpath d=\"M370,170 Q400,130 430,170\" fill=\"none\" stroke=\"#fff\" stroke-width=\"7\" stroke-linecap=\"round\"/\u003e\u003ccircle cx=\"378\" cy=\"136\" r=\"7\" fill=\"#fff\"/\u003e\u003ccircle cx=\"422\" cy=\"136\" r=\"7\" fill=\"#fff\"/\u003e\u003ctext x=\"400\" y=\"262\" text-anchor=\"middle\" font-family=\"system-ui, Segoe UI, Arial, sans-serif\" font-size=\"26\" font-weight=\"800\" fill=\"#2A2421\"\u003eFINAL F2 · VÍNCULO TENSO\u003c/text\u003e\u003ctext x=\"400\" y=\"298\" text-anchor=\"middle\" font-family=\"system-ui, Segoe UI, Arial, sans-serif\" font-size=\"17\" font-weight=\"500\" fill=\"#963E23\"\u003eCriterio correcto, pero la decisión se vivió como una imposición\u003c/text\u003e\u003c/svg\u003e",
+      "visualPrompt": "Resolución con vínculo tenso"
+    },
+    {
+      "id": "F3",
+      "type": "final",
+      "title": "Resultado distorsionado",
+      "text": "El balance se entrega sin el gasto de diciembre y el resultado del año aparece más alto de lo que fue. Al revisar el cierre, el contador observa la omisión y el balance tiene que rehacerse.",
+      "closingComment": "Un gasto del ejercicio quedó fuera del período en que se devengó y la información dejó de reflejar la situación de la empresa. ¿Qué herramientas tiene un auxiliar contable para sostener un criterio ante un pedido de la gerencia?",
+      "visualType": "svg",
+      "visualContent": "\u003csvg viewBox=\"0 0 800 420\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\"\u003e\u003crect width=\"800\" height=\"420\" fill=\"#F3EFE6\"/\u003e\u003ccircle cx=\"400\" cy=\"150\" r=\"64\" fill=\"#655B54\"/\u003e\u003cpath d=\"M372,128 L428,172 M428,128 L372,172\" fill=\"none\" stroke=\"#fff\" stroke-width=\"8\" stroke-linecap=\"round\"/\u003e\u003ctext x=\"400\" y=\"262\" text-anchor=\"middle\" font-family=\"system-ui, Segoe UI, Arial, sans-serif\" font-size=\"26\" font-weight=\"800\" fill=\"#2A2421\"\u003eFINAL F3 · RESULTADO DISTORSIONADO\u003c/text\u003e\u003ctext x=\"400\" y=\"298\" text-anchor=\"middle\" font-family=\"system-ui, Segoe UI, Arial, sans-serif\" font-size=\"17\" font-weight=\"500\" fill=\"#655B54\"\u003eUn gasto del ejercicio quedó fuera del período en que se devengó\u003c/text\u003e\u003c/svg\u003e",
+      "visualPrompt": "Resultado distorsionado por omitir un gasto del ejercicio"
+    },
+    {
+      "id": "F4",
+      "type": "final",
+      "title": "Consulta profesional",
+      "text": "El contador revisa la factura y los papeles disponibles, pide la documentación que falte, confirma que el servicio se prestó en diciembre y le explica el criterio a la gerencia. El gasto queda registrado en el ejercicio y el cierre se demora un día.",
+      "closingComment": "Apoyarte en quien firma los estados contables respalda la decisión y evita resolver en soledad. ¿Cuándo conviene consultar y cuándo alcanza con el criterio del propio auxiliar?",
+      "visualType": "svg",
+      "visualContent": "\u003csvg viewBox=\"0 0 800 420\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\"\u003e\u003crect width=\"800\" height=\"420\" fill=\"#ECF2E6\"/\u003e\u003ccircle cx=\"400\" cy=\"150\" r=\"64\" fill=\"#3B4F29\"/\u003e\u003crect x=\"372\" y=\"124\" width=\"56\" height=\"54\" rx=\"6\" fill=\"none\" stroke=\"#fff\" stroke-width=\"6\"/\u003e\u003cline x1=\"384\" y1=\"142\" x2=\"416\" y2=\"142\" stroke=\"#fff\" stroke-width=\"5\"/\u003e\u003cline x1=\"384\" y1=\"160\" x2=\"408\" y2=\"160\" stroke=\"#fff\" stroke-width=\"5\"/\u003e\u003ctext x=\"400\" y=\"262\" text-anchor=\"middle\" font-family=\"system-ui, Segoe UI, Arial, sans-serif\" font-size=\"26\" font-weight=\"800\" fill=\"#2A2421\"\u003eFINAL F4 · CONSULTA PROFESIONAL\u003c/text\u003e\u003ctext x=\"400\" y=\"298\" text-anchor=\"middle\" font-family=\"system-ui, Segoe UI, Arial, sans-serif\" font-size=\"17\" font-weight=\"500\" fill=\"#3B4F29\"\u003eLa decisión queda respaldada por quien firma los estados contables\u003c/text\u003e\u003c/svg\u003e",
+      "visualPrompt": "Consulta profesional resuelta con el contador"
+    }
+  ],
+  "options": [
+    {
+      "id": "N1-A",
+      "from": "N1",
+      "label": "A",
+      "text": "Registro el gasto en el ejercicio que cerró, porque el servicio se prestó en diciembre",
+      "to": "N2",
+      "effects": "Fidelidad +1; Vinculo -1",
+      "appearCondition": "",
+      "targetCondition": "",
+      "immediateConsequence": "Dejás asentado el gasto en diciembre. Todavía no revisaste qué papeles acreditan la fecha del servicio."
+    },
+    {
+      "id": "N1-B",
+      "from": "N1",
+      "label": "B",
+      "text": "Antes de registrar, pido la orden de trabajo y la conformidad del servicio",
+      "to": "N3",
+      "effects": "Fidelidad +1; Respaldo = si",
+      "appearCondition": "",
+      "targetCondition": "",
+      "immediateConsequence": "El proveedor y el encargado de mantenimiento te envían la documentación."
+    },
+    {
+      "id": "N2-A",
+      "from": "N2",
+      "label": "A",
+      "text": "Le explico que el gasto corresponde al ejercicio en que se prestó el servicio y le propongo revisar juntos los papeles",
+      "to": "N4",
+      "effects": "Fidelidad +1; Vinculo +1; Respaldo = si",
+      "appearCondition": "",
+      "targetCondition": "",
+      "immediateConsequence": "La gerencia acepta revisar la documentación con vos."
+    },
+    {
+      "id": "N2-B",
+      "from": "N2",
+      "label": "B",
+      "text": "Accedo y paso el asiento a enero",
+      "to": "N4",
+      "effects": "Fidelidad -2; Vinculo +1; Respaldo = no",
+      "appearCondition": "",
+      "targetCondition": "",
+      "immediateConsequence": "La gerencia lo agradece. El asiento pasa a enero y no queda constancia de la fecha en que se prestó el servicio."
+    },
+    {
+      "id": "N3-A",
+      "from": "N3",
+      "label": "A",
+      "text": "Registro el gasto en diciembre y archivo la documentación respaldatoria",
+      "to": "N4",
+      "effects": "Fidelidad +1; Vinculo -1",
+      "appearCondition": "",
+      "targetCondition": "",
+      "immediateConsequence": "El asiento queda registrado en diciembre, con su respaldo. La gerencia no hace comentarios."
+    },
+    {
+      "id": "N3-B",
+      "from": "N3",
+      "label": "B",
+      "text": "Le propongo a la gerencia consultar al contador que firma los estados contables",
+      "to": "N4",
+      "effects": "Fidelidad +1; Vinculo +1",
+      "appearCondition": "",
+      "targetCondition": "",
+      "immediateConsequence": "La gerencia acepta consultar al contador."
+    },
+    {
+      "id": "N4-A",
+      "from": "N4",
+      "label": "A",
+      "text": "Dejo el gasto registrado en diciembre y adjunto la documentación al legajo del ejercicio",
+      "to": "F1 o F2",
+      "effects": "Fidelidad +1",
+      "appearCondition": "La opción aparece solo si Respaldo = si",
+      "targetCondition": "Va a F1 si Vinculo \u003e= 5; si no, va a F2",
+      "immediateConsequence": "Entregás el cierre con el gasto en diciembre y la documentación archivada."
+    },
+    {
+      "id": "N4-B",
+      "from": "N4",
+      "label": "B",
+      "text": "Sigo el pedido de la gerencia y dejo el gasto para enero",
+      "to": "F3",
+      "effects": "Fidelidad -2; Vinculo +1",
+      "appearCondition": "",
+      "targetCondition": "",
+      "immediateConsequence": "El cierre se entrega sin ese gasto."
+    },
+    {
+      "id": "N4-C",
+      "from": "N4",
+      "label": "C",
+      "text": "Pido que el contador que firma los estados contables defina el tratamiento",
+      "to": "F4",
+      "effects": "Fidelidad +1; Vinculo +1",
+      "appearCondition": "",
+      "targetCondition": "",
+      "immediateConsequence": "Le llevás la factura y los papeles al contador."
+    }
+  ]
+};
+
+let state = {
+  registered: !DATOS_SIMULADOR.requireLogin,
+  studentName: '',
+  studentId: '',
+  submitted: false,
+  currentNodeId: DATOS_SIMULADOR.nodes[0].id,
+  vars: {},
+  history: [],
+  pendingConsequence: null
+};
+
+function initVars() {
+  const v = {};
+  DATOS_SIMULADOR.variables.forEach(item => {
+    if (item.type === 'number') {
+      v[item.name] = Number(item.initial);
+    } else {
+      const s = String(item.initial ?? 'no').toLowerCase().trim();
+      v[item.name] = (s === 'si' || s === 'sí' || s === 'true') ? 'si' : s;
+    }
+  });
+  return v;
+}
+
+function findVarName(raw) {
+  const clean = String(raw || '').trim().toLowerCase();
+  const found = DATOS_SIMULADOR.variables.find(v => v.name.toLowerCase() === clean);
+  return found ? found.name : null;
+}
+
+function applyEffects(vars, effectsStr) {
+  const next = Object.assign({}, vars);
+  if (!effectsStr || effectsStr.trim() === '—' || effectsStr.trim() === '-') return next;
+  effectsStr.split(/[;,]/).map(s => s.trim()).filter(Boolean).forEach(part => {
+    const assign = part.match(/^([a-zA-ZáéíóúÁÉÍÓÚñÑ0-9_]+)\s*=\s*(.+)$/);
+    if (assign) {
+      const vn = findVarName(assign[1]);
+      const val = assign[2].trim().toLowerCase();
+      if (vn) next[vn] = (val === 'si' || val === 'sí' || val === 'true') ? 'si' : val;
+      return;
+    }
+    const delta = part.match(/^([a-zA-ZáéíóúÁÉÍÓÚñÑ0-9_]+)\s*([+\-−])\s*(\d+(\.\d+)?)$/);
+    if (delta) {
+      const vn = findVarName(delta[1]);
+      const sign = delta[2] === '+' ? 1 : -1;
+      const num = parseFloat(delta[3]);
+      if (vn && typeof next[vn] === 'number') {
+        next[vn] = Math.max(0, Math.min(10, next[vn] + sign * num));
+      }
+    }
+  });
+  return next;
+}
+
+function evalCondition(vars, expr) {
+  if (!expr || !expr.trim()) return true;
+  const clean = expr.trim().replace(/^(la opción aparece solo si|la opcion aparece solo si|aparece solo si|solo si)\s+/i, '').trim();
+  const m = clean.match(/^([a-zA-ZáéíóúÁÉÍÓÚñÑ0-9_]+)\s*(>=|<=|≥|≤|=|>|<|mayor o igual que|menor o igual que|menor que|mayor que)\s*(.+)$/i);
+  if (!m) return true;
+  const vn = findVarName(m[1]);
+  if (!vn) return true;
+  const op = m[2].toLowerCase();
+  const rhs = m[3].trim().toLowerCase().replace(/\.$/, '');
+  const cur = vars[vn];
+  if (typeof cur === 'number') {
+    const n = parseFloat(rhs);
+    if (op === '>=' || op === '≥' || op === 'mayor o igual que') return cur >= n;
+    if (op === '<=' || op === '≤' || op === 'menor o igual que') return cur <= n;
+    if (op === '>' || op === 'mayor que') return cur > n;
+    if (op === '<' || op === 'menor que') return cur < n;
+    if (op === '=') return cur === n;
+  } else {
+    const cNorm = (cur === 'si' || cur === 'sí') ? 'si' : String(cur).toLowerCase();
+    const rNorm = (rhs === 'si' || rhs === 'sí') ? 'si' : rhs;
+    if (op === '=') return cNorm === rNorm;
+  }
+  return true;
+}
+
+function resolveDest(opt, varsAfter) {
+  if (opt.targetCondition) {
+    const bm = opt.targetCondition.match(/va a\s+([A-Za-z0-9_]+)\s+si\s+([^;]+);\s*si\s*no,?\s*(?:va a\s*)?([A-Za-z0-9_]+)/i);
+    if (bm) return evalCondition(varsAfter, bm[2]) ? bm[1].trim() : bm[3].trim();
+  }
+  return String(opt.to || '').split(/\s+o\s+/)[0].trim();
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[<>&"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+}
+
+function beginWithStudent() {
+  const n = document.getElementById('st-name').value.trim();
+  const id = document.getElementById('st-id').value.trim();
+  const err = document.getElementById('st-err');
+  if (!n) {
+    err.style.display = 'block';
+    err.textContent = 'Por favor ingresá tu Nombre y Apellido para iniciar.';
+    return;
+  }
+  state.studentName = n;
+  state.studentId = id;
+  state.registered = true;
+  render();
+}
+
+async function sendResultToSheet() {
+  const btn = document.getElementById('btn-sheet-submit');
+  if (!btn || state.submitted) return;
+  btn.disabled = true;
+  btn.textContent = 'Enviando registro a la cátedra...';
+
+  const node = DATOS_SIMULADOR.nodes.find(n => n.id === state.currentNodeId);
+  const routeCode = state.history.map(h => h.optionId).concat([node ? node.id : '']).join(', ');
+  const varsSummary = DATOS_SIMULADOR.variables.map(v => v.name + ': ' + state.vars[v.name]).join(' | ');
+  const stepsSummary = state.history.map((h, i) => (i+1) + '. ' + h.optionId + ' (' + h.optionText + ')').join(' -> ');
+
+  const payload = {
+    studentName: state.studentName || 'Sin nombre',
+    studentId: state.studentId || '-',
+    simTitle: DATOS_SIMULADOR.meta.title,
+    finalNode: node ? (node.id + ' - ' + node.title) : '',
+    routeCode: routeCode,
+    finalVars: varsSummary,
+    stepsDetail: stepsSummary
+  };
+
+  if (DATOS_SIMULADOR.sheetsWebhookUrl) {
+    try {
+      await fetch(DATOS_SIMULADOR.sheetsWebhookUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      });
+      state.submitted = true;
+      btn.textContent = '✓ Recorrido registrado correctamente en la planilla docente';
+    } catch (e) {
+      btn.disabled = false;
+      btn.textContent = 'Reintentar envío a la planilla';
+    }
+  } else {
+    state.submitted = true;
+    btn.textContent = '✓ Finalización confirmada (Copiá tu código abajo)';
+  }
+}
+
+function render() {
+  document.getElementById('sim-title').textContent = DATOS_SIMULADOR.meta.title;
+  document.getElementById('sim-role').textContent = 'Rol: ' + DATOS_SIMULADOR.meta.role + (state.studentName ? ' · Alumno/a: ' + state.studentName : '');
+  const screen = document.getElementById('sim-screen');
+
+  if (!state.registered) {
+    screen.innerHTML = '<div class="content">' +
+      '<span class="badge badge-decision">Registro de Estudiante</span>' +
+      '<h2>' + escapeHtml(DATOS_SIMULADOR.meta.title) + '</h2>' +
+      '<p style="color:var(--muted);margin-bottom:10px;">Ingresá tus datos antes de comenzar. Al finalizar el caso, tu recorrido quedará registrado para el docente.</p>' +
+      '<div id="st-err" class="msg-banner"></div>' +
+      '<div class="login-box">' +
+      '<label class="field-label">Nombre y Apellido *</label>' +
+      '<input type="text" id="st-name" class="field-input" placeholder="Ej: Juan Pérez" value="' + escapeHtml(state.studentName) + '">' +
+      '<label class="field-label">Legajo / DNI (Opcional)</label>' +
+      '<input type="text" id="st-id" class="field-input" style="margin-bottom:0;" placeholder="Ej: 40123456" value="' + escapeHtml(state.studentId) + '">' +
+      '</div>' +
+      '<button class="option-btn" onclick="beginWithStudent()"><span>Comenzar simulación →</span></button>' +
+      '</div>';
+    return;
+  }
+
+  const node = DATOS_SIMULADOR.nodes.find(n => n.id === state.currentNodeId);
+  if (!node) return;
+
+  let visual = '';
+  if (node.visualType === 'svg' && node.visualContent) {
+    visual = '<div class="visual-box">' + node.visualContent + '</div>';
+  } else if (node.visualType === 'image' && node.visualContent) {
+    visual = '<div class="visual-box"><img src="' + node.visualContent + '" alt=""></div>';
+  }
+
+  if (state.pendingConsequence) {
+    screen.innerHTML = visual + '<div class="content">' +
+      '<span class="badge badge-decision">Consecuencia inmediata</span>' +
+      '<p class="situation-text">' + escapeHtml(state.pendingConsequence.text) + '</p>' +
+      '<button class="option-btn" onclick="continueStep()"><span>Continuar →</span></button>' +
+      '</div>';
+    return;
+  }
+
+  if (node.type === 'final') {
+    const code = state.history.map(h => h.optionId).concat([node.id]).join(', ');
+    const varsHtml = DATOS_SIMULADOR.variables.map(v => {
+      const val = state.vars[v.name];
+      if (v.type === 'number') {
+        const pct = Math.round((Number(val)/10)*100);
+        return '<div class="var-card"><div><strong>' + escapeHtml(v.name) + ':</strong> ' + val + ' / 10</div>' +
+               '<div class="bar-bg"><div class="bar-fill" style="width:' + pct + '%"></div></div></div>';
+      }
+      return '<div class="var-card"><strong>' + escapeHtml(v.name) + ':</strong> ' + escapeHtml(val) + '</div>';
+    }).join('');
+
+    const histHtml = state.history.map((h, i) =>
+      '<div class="step-item"><strong>Paso ' + (i+1) + ' (' + escapeHtml(h.optionId) + '):</strong> ' +
+      escapeHtml(h.nodeText) + '<br><em>Elegiste: ' + escapeHtml(h.optionText) + '</em></div>'
+    ).join('');
+
+    const submitBox = '<div class="submit-sheet-box">' +
+      '<div style="font-size:13px;text-transform:uppercase;letter-spacing:0.05em;opacity:0.9;">Confirmación de finalización</div>' +
+      '<div style="font-size:20px;font-weight:800;margin:4px 0;">Registrar mi recorrido para el docente</div>' +
+      '<div style="font-size:15px;opacity:0.95;">Estudiante: <strong>' + escapeHtml(state.studentName || 'Registrado') + '</strong> · Código: <strong>' + escapeHtml(code) + '</strong></div>' +
+      '<button id="btn-sheet-submit" class="submit-sheet-btn" onclick="sendResultToSheet()" ' + (state.submitted ? 'disabled' : '') + '>' +
+      (state.submitted ? '✓ Recorrido registrado correctamente en la planilla docente' : '✓ Finalizar y Enviar mi Recorrido al Docente') +
+      '</button></div>';
+
+    screen.innerHTML = visual + '<div class="content">' +
+      '<span class="badge badge-final">Final · ' + escapeHtml(node.id) + '</span>' +
+      '<h2>' + escapeHtml(node.title) + '</h2>' +
+      '<p class="situation-text">' + escapeHtml(node.text) + '</p>' +
+      '<div class="closing-box"><strong>Comentario de cierre:</strong><br>' + escapeHtml(node.closingComment) + '</div>' +
+      submitBox +
+      '<h3>Valores finales de las variables</h3><div class="vars-grid">' + varsHtml + '</div>' +
+      '<h3>Recorrido completo</h3>' + histHtml +
+      '<div class="code-box"><div><small style="color:#A8A09A;display:block;">CÓDIGO DE RECORRIDO</small><strong id="route-code">' + escapeHtml(code) + '</strong></div>' +
+      '<button class="secondary-btn" onclick="copyCode()">Copiar código</button></div>' +
+      '<button class="option-btn" onclick="restartSim()"><span>Volver a empezar</span></button>' +
+      '</div>';
+    return;
+  }
+
+  const opts = DATOS_SIMULADOR.options.filter(o => o.from === node.id && (!o.appearCondition || evalCondition(state.vars, o.appearCondition)));
+  const optsHtml = opts.map(o =>
+    '<button class="option-btn" onclick="chooseOption(\'' + o.id + '\')">' +
+    '<span class="opt-letter">' + escapeHtml(o.label) + '</span>' +
+    '<span>' + escapeHtml(o.text) + '</span></button>'
+  ).join('');
+
+  screen.innerHTML = visual + '<div class="content">' +
+    '<span class="badge badge-decision">Situación · ' + escapeHtml(node.id) + '</span>' +
+    '<p class="situation-text">' + escapeHtml(node.text) + '</p>' +
+    '<div class="options-list">' + optsHtml + '</div></div>';
+}
+
+function chooseOption(optId) {
+  const opt = DATOS_SIMULADOR.options.find(o => o.id === optId);
+  const node = DATOS_SIMULADOR.nodes.find(n => n.id === state.currentNodeId);
+  if (!opt || !node) return;
+  state.vars = applyEffects(state.vars, opt.effects);
+  const nextId = resolveDest(opt, state.vars);
+  state.history.push({ nodeId: node.id, nodeText: node.text, optionId: opt.id, optionText: opt.text });
+  if (opt.immediateConsequence && opt.immediateConsequence.trim() !== '—') {
+    state.pendingConsequence = { text: opt.immediateConsequence, nextNodeId: nextId };
+  } else {
+    state.currentNodeId = nextId;
+  }
+  render();
+}
+
+function continueStep() {
+  if (state.pendingConsequence) {
+    state.currentNodeId = state.pendingConsequence.nextNodeId;
+    state.pendingConsequence = null;
+    render();
+  }
+}
+
+function copyCode() {
+  const code = document.getElementById('route-code').textContent;
+  const t = document.createElement('textarea');
+  t.value = code;
+  document.body.appendChild(t);
+  t.select();
+  document.execCommand('copy');
+  document.body.removeChild(t);
+}
+
+function restartSim() {
+  state = {
+    registered: state.studentName ? true : (!DATOS_SIMULADOR.requireLogin),
+    studentName: state.studentName,
+    studentId: state.studentId,
+    submitted: false,
+    currentNodeId: DATOS_SIMULADOR.nodes[0].id,
+    vars: initVars(),
+    history: [],
+    pendingConsequence: null
+  };
+  render();
+}
+
+state.vars = initVars();
+render();
+</script>
+</body>
+</html>
