@@ -655,7 +655,13 @@ function render() {
       escapeHtml(h.nodeText) + '<br><em>Elegiste: ' + escapeHtml(h.optionText) + '</em></div>'
     ).join('');
 
-    const submitBox = '<div class="submit-sheet-box">' +
+    const submitBox = !DATOS_SIMULADOR.sheetsWebhookUrl
+      ? '<div class="submit-sheet-box">' +
+        '<div style="font-size:13px;text-transform:uppercase;letter-spacing:0.05em;opacity:0.9;">Fin del recorrido</div>' +
+        '<div style="font-size:20px;font-weight:800;margin:4px 0;">Guardá el código de tu recorrido</div>' +
+        '<div style="font-size:15px;opacity:0.95;">Este simulador no envía datos automáticamente. Copiá el código de más abajo y compartilo con tu docente si te lo piden. Estudiante: <strong>' + escapeHtml(state.studentName || 'Registrado') + '</strong> · Código: <strong>' + escapeHtml(code) + '</strong></div>' +
+        '</div>'
+      : '<div class="submit-sheet-box">' +
       '<div style="font-size:13px;text-transform:uppercase;letter-spacing:0.05em;opacity:0.9;">Confirmación de finalización</div>' +
       '<div style="font-size:20px;font-weight:800;margin:4px 0;">Registrar mi recorrido para el docente</div>' +
       '<div style="font-size:15px;opacity:0.95;">Estudiante: <strong>' + escapeHtml(state.studentName || 'Registrado') + '</strong> · Código: <strong>' + escapeHtml(code) + '</strong></div>' +
